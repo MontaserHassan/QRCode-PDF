@@ -2,9 +2,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import * as bcrypt from 'bcrypt';
+import { nanoid } from 'nanoid';
 
 import Util from '../../Utils/util.util';
-import { nanoid } from 'nanoid';
 
 
 

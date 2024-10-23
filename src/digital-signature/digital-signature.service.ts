@@ -1,12 +1,12 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
+import { DigitalSignature, DigitalSignatureDocument } from './entities/digital-signature.entity';
 import CreateDigitalSignatureDto from './dto/create-digital-signature.dto';
 import UpdateDigitalSignatureDto from './dto/update-digital-signature.dto';
-import { InjectModel } from '@nestjs/mongoose';
-import { DigitalSignature, DigitalSignatureDocument } from './entities/digital-signature.entity';
-import { Model } from 'mongoose';
 import FilterDigitalSignatureDataDto from './dto/filter-digital-signature-data.dto';
 
 
@@ -31,8 +31,8 @@ export default class DigitalSignatureService {
     return user;
   };
 
-  async findById(filterData: FilterDigitalSignatureDataDto) {
-    const user = await this.digitalSignatureModel.findById(filterData).select('-__v');
+  async findById(dsId: string) {
+    const user = await this.digitalSignatureModel.findById(dsId).select('-__v');
     return user;
   };
 

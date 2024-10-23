@@ -13,7 +13,9 @@ import { DigitalSignature, digitalSignatureSchema } from './entities/digital-sig
 import { AuthGuard } from '../Guards/auth/auth.guard';
 import Util from '../Utils/util.util';
 import TokenUtil from '../Utils/token.util';
+import QRCodePDFUtil from 'src/Utils/qrcode-pdf.util';
 import UserService from 'src/user/user.service';
+import { FileWithSinging, fileWithSingingSchema } from './entities/file-with-signature.entity';
 
 
 
@@ -21,12 +23,12 @@ import UserService from 'src/user/user.service';
   imports: [
     MongooseModule.forFeature([
       { name: User.name, schema: userSchema }, { name: Token.name, schema: TokenSchema },
-      { name: DigitalSignature.name, schema: digitalSignatureSchema }
+      { name: DigitalSignature.name, schema: digitalSignatureSchema }, { name: FileWithSinging.name, schema: fileWithSingingSchema },
     ]),
     ConfigModule.forRoot({ isGlobal: true, }),
     JwtModule.register({ secret: process.env.JWT_SECRET }),
   ],
   controllers: [DigitalSignatureController],
-  providers: [DigitalSignatureService, UserService, TokenService, TokenUtil, Util, AuthGuard],
+  providers: [DigitalSignatureService, UserService, TokenService, TokenUtil, Util, QRCodePDFUtil, AuthGuard],
 })
 export class DigitalSignatureModule { };

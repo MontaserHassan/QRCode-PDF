@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { IsString, IsOptional, IsNumber, IsNotEmpty } from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty, IsIn, IsBoolean } from 'class-validator';
 
 
 
@@ -16,19 +16,20 @@ export default class CreateDigitalSignatureDto {
     @IsOptional()
     qrCode?: string;
 
-    @IsNumber({}, { message: 'Signature Number must be a number', })
+    @IsString({ message: 'Signature Number must be a string', })
     @IsOptional()
-    signatureNumber?: number;
+    signatureNumber?: string;
 
     @IsString({ message: 'Subscription Way must be a string', })
     @IsNotEmpty({ message: 'Subscription Way is required' })
+    @IsIn(['monthly', 'quarterly', 'half-yearly', 'yearly'])
     subscriptionWay: string;
 
     @IsString({ message: 'Subscription Expiry Date must be a string', })
     @IsOptional()
     subscriptionExpiryDate?: Date;
 
-    @IsString({ message: 'Is Paid must be a string', })
+    @IsBoolean({ message: 'Is Paid must be a boolean', })
     @IsNotEmpty({ message: 'Is Paid is required', })
     isPaid: boolean;
 

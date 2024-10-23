@@ -1,8 +1,9 @@
 /* eslint-disable prettier/prettier */
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { SubscriptionWay } from '../../Interfaces/subscription-way.interface';
 import { nanoid } from 'nanoid';
+
+import { SubscriptionWay } from '../../Interfaces/subscription-way.interface';
 
 
 
@@ -14,8 +15,8 @@ class DigitalSignature {
     @Prop({ type: String, default: () => nanoid(24), })
     _id: string;
 
-    @Prop({ type: Number, required: true, unique: true })
-    signatureNumber: number;
+    @Prop({ type: String, required: true, unique: true })
+    signatureNumber: string;
 
     @Prop({ type: String, required: true, unique: true })
     qrCode: string;

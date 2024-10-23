@@ -2,46 +2,49 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Body, Controller, Post, Request, Response, NotFoundException, UseGuards, Get, Patch } from '@nestjs/common';
 import * as QRCode from 'qrcode';
-import { NextFunction } from 'express';
 
 import DigitalSignatureService from './digital-signature.service';
 import { ResponseInterface } from '../Interfaces/response.interface';
 import { AuthGuard } from '../Guards/auth/auth.guard';
 import CreateDigitalSignatureDto from './dto/create-digital-signature.dto';
 import UpdateDigitalSignatureDto from './dto/update-digital-signature.dto';
-import TokenUtil from '../Utils/token.util';
+import SignPdfDto from './dto/sign.Pdf.dto copy';
 import UserService from '../user/user.service';
 import Util from '../Utils/util.util';
+import QRCodePDFUtil from 'src/Utils/qrcode-pdf.util';
 
 
 
 @Controller('digital-signature')
 export default class DigitalSignatureController {
 
-  constructor(private readonly userService: UserService, private readonly tokenUtil: TokenUtil, private readonly util: Util, private readonly digitalSignatureService: DigitalSignatureService) { };
+  constructor(private readonly userService: UserService, private readonly qRCodePDFUtil: QRCodePDFUtil, private readonly util: Util, private readonly digitalSignatureService: DigitalSignatureService) { };
 
   @Post('/')
   @UseGuards(AuthGuard)
-  async createDigitalSignature(@Request() req, @Response() res, @Body() createDigitalSignatureDto: CreateDigitalSignatureDto, next: NextFunction) {
+  async createDigitalSignature(@Request() req, @Response() res, @Body() createDigitalSignatureDto: CreateDigitalSignatureDto) {
     try {
       const isUserExisting = await this.userService.findById(req.user.userId);
+      console.log('isUserExisting: ', isUserExisting);
       if (!isUserExisting) throw new NotFoundException(`User with ID ${req.user.userId} does not exist`);
-      const IsUserHavingDS = await this.digitalSignatureService.findOne({ userId: req.user.userId });
-      if (IsUserHavingDS) {
-        throw new NotFoundException(`Digital Signature with ID ${req.user.userId} already exist`)
-      };
-      createDigitalSignatureDto.userId = req.user.userId
-      const qrCode = await QRCode.toDataURL({ userCode: createDigitalSignatureDto.userCode, role: isUserExisting.role, email: isUserExisting.email });
-      createDigitalSignatureDto.qrCode = qrCode;
-      createDigitalSignatureDto.userId = req.user.userId;
-      createDigitalSignatureDto.role = req.user.role;
+      const isUserHavingDS = await this.digitalSignatureService.findOne({ userId: req.user.userId });
+      if (isUserHavingDS) throw new NotFoundException(`Digital Signature with ID ${req.user.userId} already exist`);
       createDigitalSignatureDto.userCode = isUserExisting.userCode;
-      createDigitalSignatureDto.active = createDigitalSignatureDto.isPaid == true ? true : false;
+      createDigitalSignatureDto.userId = isUserExisting._id
+      createDigitalSignatureDto.role = isUserExisting.role;
+      createDigitalSignatureDto.active = createDigitalSignatureDto.isPaid ? true : false;
+      createDigitalSignatureDto.signatureNumber = this.util.generateAlphanumericCode(20);
       createDigitalSignatureDto.subscriptionExpiryDate = this.util.calculateSubscriptionExpiryDate(createDigitalSignatureDto.subscriptionWay);
-      const newDigitalSignature = await this.digitalSignatureService.create(createDigitalSignatureDto);
-      if (!newDigitalSignature) {
-        throw new NotFoundException(`Digital Signature with ID ${createDigitalSignatureDto.userId} does not exist`)
+      const qrCodeData = {
+        userCode: createDigitalSignatureDto.userCode,
+        role: isUserExisting.role,
+        email: isUserExisting.email,
+        signatureNumber: createDigitalSignatureDto.signatureNumber,
       };
+      const qrCode = await QRCode.toDataURL(JSON.stringify(qrCodeData));
+      createDigitalSignatureDto.qrCode = qrCode;
+      const newDigitalSignature = await this.digitalSignatureService.create(createDigitalSignatureDto);
+      if (!newDigitalSignature) throw new NotFoundException(`Digital Signature with ID ${createDigitalSignatureDto.userId} does not exist`);
       const response: ResponseInterface = {
         responseCode: 200,
         responseMessage: "Digital Signature created successfully",
@@ -50,15 +53,40 @@ export default class DigitalSignatureController {
         },
       };
       res.locals = response;
-      return res.status(response.responseCode).json(response);
+      return res.status(response.responseCode).send(response);
     } catch (err) {
-      next(err);
+      console.log(err);
+      throw err;
+    };
+  };
+
+  @Post('sign-pdf')
+  @UseGuards(AuthGuard)
+  async signPdf(@Request() req, @Response() res, @Body() signPdfDto: SignPdfDto) {
+    try {
+      const isUserExisting = await this.userService.findById(req.user.userId);
+      if (!isUserExisting) throw new NotFoundException(`User with ID ${req.user.userId} does not exist`);
+      const digitalSignature = await this.digitalSignatureService.findOne({ userId: req.user.userId });
+      if (!digitalSignature) throw new NotFoundException(`Digital Signature with ID ${req.user.userId} does not exist`);
+      const pdfWithSigning = await this.qRCodePDFUtil.drawQRCodeOnFile(digitalSignature.qrCode, signPdfDto.pdf);
+      // save at file with signing
+      const response: ResponseInterface = {
+        responseCode: 200,
+        responseMessage: "PDF signed successfully",
+        data: {
+          pdfWithSigning: pdfWithSigning,
+        },
+      };
+      // res.locals = response;
+      return res.status(response.responseCode).send(response);
+    } catch (err) {
+      throw err;
     };
   };
 
   @Get('/')
   @UseGuards(AuthGuard)
-  async getDigitalSignature(@Request() req, @Response() res, next: NextFunction) {
+  async getDigitalSignature(@Request() req, @Response() res) {
     try {
       const isUserExisting = await this.userService.findById(req.user.userId);
       if (!isUserExisting) throw new NotFoundException(`User with ID ${req.user.userId} does not exist`);
@@ -72,15 +100,15 @@ export default class DigitalSignatureController {
         },
       };
       res.locals = response;
-      return res.status(response.responseCode).json(response);
+      return res.status(response.responseCode).send(response);
     } catch (err) {
-      next(err);
+      throw err;
     };
   };
 
   @Patch('/')
   // @UseGuards(AuthGuard)
-  async updateDigitalSignature(@Request() req, @Response() res, @Body() updateDigitalSignatureDto: UpdateDigitalSignatureDto, next: NextFunction) {
+  async updateDigitalSignature(@Request() req, @Response() res, @Body() updateDigitalSignatureDto: UpdateDigitalSignatureDto) {
     try {
       const isUserExisting = await this.userService.findById(req.user.userId);
       if (!isUserExisting) throw new NotFoundException(`User with ID ${req.user.userId} does not exist`);
@@ -106,9 +134,9 @@ export default class DigitalSignatureController {
         },
       };
       res.locals = response;
-      return res.status(response.responseCode).json(response);
+      return res.status(response.responseCode).send(response);
     } catch (err) {
-      next(err);
+      throw err;
     };
   };
 

@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
@@ -11,7 +11,6 @@ import TokenUtil from '../Utils/token.util';
 import { AuthGuard } from '../Guards/auth/auth.guard';
 import TokenService from './token.service';
 import { Token, TokenSchema } from './entities/token.entity';
-import LoggerMiddleware from '../logger/logger.middleware';
 import Util from '../Utils/util.util';
 
 
@@ -25,8 +24,4 @@ import Util from '../Utils/util.util';
   controllers: [UserController],
   providers: [UserService, TokenService, TokenUtil, Util, AuthGuard],
 })
-export default class UserModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LoggerMiddleware).forRoutes('*');
-  };
-};
+export default class UserModule { };
