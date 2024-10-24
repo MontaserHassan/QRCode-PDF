@@ -1,8 +1,9 @@
 /* eslint-disable prettier/prettier */
-import { ExceptionFilter, Catch, ArgumentsHost, BadRequestException, HttpStatus, HttpException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ExceptionFilter, Catch, ArgumentsHost, BadRequestException, HttpStatus, } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { AxiosError } from 'axios';
 import { MongoServerError } from 'mongodb';
+import { customExceptionFilter } from '../Error/error-exception.error';
+import { CommonMessage } from 'src/Messages/index.message';
 import logger from 'src/Configs/logger.config';
 
 
@@ -17,56 +18,38 @@ export default class ValidationExceptionFilter implements ExceptionFilter {
 
         if (response.headersSent) return;
 
-        let status = HttpStatus.INTERNAL_SERVER_ERROR;
-        let message = 'Internal server error';
-        let details = null;
+        let status: number = HttpStatus.INTERNAL_SERVER_ERROR;
+        let message: string = CommonMessage.SERVER_DOWN;
+        let fields: string[] | null = null;
+        let details: string[] | null = null;
 
-        if (exception instanceof BadRequestException) {
-            status = exception.getStatus();
-            const exceptionResponse: any = exception.getResponse();
-            message = Array.isArray(exceptionResponse.message) ? exceptionResponse.message[0] : exceptionResponse.message
-            details = Array.isArray(exceptionResponse.message) ? exceptionResponse.message : [exceptionResponse.message];
-        } else if (exception instanceof NotFoundException) {
-            status = exception.getStatus();
-            const exceptionResponse: any = exception.getResponse();
-            message = Array.isArray(exceptionResponse.message) ? exceptionResponse.message[0] : exceptionResponse.message
-            details = Array.isArray(exceptionResponse.message) ? exceptionResponse.message : [exceptionResponse.message];
-        } else if (exception instanceof UnauthorizedException) {
+        if (exception instanceof customExceptionFilter) {
             status = exception.getStatus();
             const exceptionResponse: any = exception.getResponse();
             message = exceptionResponse.message;
-        } else if (exception instanceof HttpException) {
+            fields = exceptionResponse.fields;
+        } else if (exception instanceof BadRequestException) {
             status = exception.getStatus();
             const exceptionResponse: any = exception.getResponse();
-            message = Array.isArray(exceptionResponse.message) ? exceptionResponse.message : [exceptionResponse.message];
-            details = Array.isArray(exceptionResponse.message) ? exceptionResponse.message : null;
+            const validationMessages = exceptionResponse.message;
+            message = Array.isArray(validationMessages) ? validationMessages[0] : validationMessages;
+            fields = Array.isArray(validationMessages) ? validationMessages : [validationMessages];
+            details = Array.isArray(validationMessages) ? validationMessages : [validationMessages];
         } else if (exception instanceof MongoServerError) {
             if (exception.code === 11000) {
-                message = exception.message
+                message = exception.message;
             } else {
                 message = `This ${Object?.values(exception?.keyValue)?.join(', ')} value for key ${Object?.keys(exception?.keyPattern)?.join(', ')} already exists.` || exception.message;
             };
             status = HttpStatus.CONFLICT;
             details = exception.keyValue;
-        } else if (exception instanceof Error) {
-            message = exception.message;
-            if (exception.name === "ServerError" || exception.message.includes('Response timeout')) {
-                status = HttpStatus.SERVICE_UNAVAILABLE;
-            };
-            if (exception.name === "MongooseError") {
-                status = HttpStatus.CONFLICT;
-            };
-            if (exception.name === "AxiosError") {
-                const error = exception as AxiosError;
-                if (error.response?.status) status = error.response.status;
-                details = error.response.data;
-            };
         };
 
         const Response = {
             responseCode: status,
             responseMessage: message,
             actionName: request.url === "/action" ? request.body['actionName'] : "",
+            fields: fields,
             details: details,
             path: request.url,
             timestamp: new Date().toISOString(),

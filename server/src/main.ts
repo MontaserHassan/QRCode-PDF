@@ -2,7 +2,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { Logger, ValidationPipe } from '@nestjs/common';
-import mongoose from 'mongoose';
 import * as bodyParser from 'body-parser';
 import * as timeOut from 'connect-timeout';
 
@@ -29,7 +28,6 @@ async function bootstrap() {
   const dbUri = configService.get<string>('DB_URI');
 
   app.use(new LoggerMiddleware().use);
-  await mongoose.connect(process.env.DB_URI);
 
   const server = await app.listen(port);
   const address = server.address();

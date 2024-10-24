@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Controller, Get, Post, Body, Patch, NotFoundException, UseGuards, Request, Response, } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, NotFoundException, UseGuards, Request, Response, HttpStatus, } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
 import UserService from './user.service';
@@ -9,6 +9,8 @@ import SignInUserDto from './dto/sign-in-user.dto';
 import UpdateUserPasswordDto from './dto/update-password-user.dto';
 import TokenUtil from '../Utils/token.util';
 import { AuthGuard } from '../Guards/auth/auth.guard';
+import { customExceptionFilter } from 'src/Error/error-exception.error';
+import { ErrorUserMessage, SuccessUserMessage } from 'src/Messages/index.message';
 
 
 
@@ -22,11 +24,11 @@ export default class UserController {
     try {
       const { email } = createUserDto;
       const isUserExisting = await this.userService.findOne({ email });
-      if (isUserExisting && isUserExisting.email === email) throw new NotFoundException(`User with Email ${createUserDto.email} already exists`);
+      if (isUserExisting && isUserExisting.email === email) throw new customExceptionFilter(ErrorUserMessage.EMAIL_ALREADY_EXISTS, HttpStatus.OK, ['email']);
       const createdUser = await this.userService.create(createUserDto);
       const response = {
-        responseMessage: "User created successfully",
-        responseCode: 201,
+        responseMessage: SuccessUserMessage.CREATED,
+        responseCode: HttpStatus.CREATED,
         data: {
           user: createdUser,
         },
@@ -43,17 +45,14 @@ export default class UserController {
     try {
       const { email, password } = signInUserDto;
       const user = await this.userService.findOne({ email });
-      if (!user) throw new NotFoundException(`Email or Password is not correct`);
-      // const currentTime = new Date();
-      // const hasTokenActive = await this.tokenUtil.hasTokenActiveByUserId(user._id);
-      // if (hasTokenActive && hasTokenActive.expiryDate > currentTime && user.logged) throw new NotFoundException(`User with Email ${email} is already logged in`);
+      if (!user) throw new customExceptionFilter(ErrorUserMessage.INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED, ['email', 'password']);
       const isPasswordMatch = await bcrypt.compare(password, user.password);
-      if (!isPasswordMatch) throw new NotFoundException(`Email or Password is not correct`);
+      if (!isPasswordMatch) throw new customExceptionFilter(ErrorUserMessage.INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED, ['email', 'password']);
       const createdToken = await this.tokenUtil.createToken(user.email, user._id, user.role);
       const updatedUser = await this.userService.update(user._id, { logged: true, lastSeen: new Date() });
       const response = {
-        responseMessage: "User logged in successfully",
-        responseCode: 200,
+        responseMessage: SuccessUserMessage.LOGGED_IN,
+        responseCode: HttpStatus.OK,
         data: {
           user: updatedUser,
           token: createdToken,
@@ -71,11 +70,11 @@ export default class UserController {
   async getProfile(@Request() req, @Response() res) {
     try {
       const isUserExisting = await this.userService.findById(req.user.userId);
-      if (!isUserExisting) throw new NotFoundException(`User with ID ${req.user.userId} does not exist`);
+      if (!isUserExisting) throw new customExceptionFilter(ErrorUserMessage.USER_NOT_FOUND, HttpStatus.UNAUTHORIZED, ['']);
       await this.userService.update(isUserExisting._id, { lastSeen: new Date() });
       const response = {
-        responseMessage: "User profile fetched successfully",
-        responseCode: 200,
+        responseMessage: SuccessUserMessage.GET_PROFILE,
+        responseCode: HttpStatus.OK,
         data: {
           user: isUserExisting,
         },
@@ -94,8 +93,8 @@ export default class UserController {
       await this.userService.update(req.user.userId, { logged: false, lastSeen: new Date() });
       await this.tokenUtil.deleteToken(req.user.tokenId);
       const response = {
-        responseMessage: "User logged out successfully",
-        responseCode: 200,
+        responseMessage: SuccessUserMessage.LOGGED_OUT,
+        responseCode: HttpStatus.OK,
         data: {},
       };
       res.locals = response;
@@ -108,13 +107,13 @@ export default class UserController {
   @Patch('/')
   @UseGuards(AuthGuard)
   async update(@Request() req, @Response() res, @Body() updateUserDto: UpdateUserDto) {
-    if (updateUserDto['password'] || updateUserDto['role']) throw new NotFoundException(`Updating password or role is not allowed`);
+    if (updateUserDto['password']) throw new customExceptionFilter(ErrorUserMessage.WRONG_DATA, HttpStatus.BAD_REQUEST, ['']);;
     const isUserExisting = await this.userService.findById(req.user.userId);
-    if (!isUserExisting) throw new NotFoundException(`User with ID ${req.user.userId} does not exist`);
+    if (!isUserExisting) throw new customExceptionFilter(ErrorUserMessage.USER_NOT_FOUND, HttpStatus.BAD_REQUEST, ['']);
     const updatedUser = await this.userService.update(req.user.userId, updateUserDto);
     const response = {
-      responseMessage: "User updated successfully",
-      responseCode: 200,
+      responseMessage: SuccessUserMessage.UPDATED,
+      responseCode: HttpStatus.ACCEPTED,
       data: {
         user: updatedUser,
       },
@@ -129,8 +128,8 @@ export default class UserController {
     if (!isUserExisting) throw new NotFoundException(`User with ID ${req.user.userId} does not exist`);
     const updatedUser = await this.userService.updatePassword(req.user.userId, updateUserPasswordDto);
     const response = {
-      responseMessage: "User updated successfully",
-      responseCode: 200,
+      responseMessage: SuccessUserMessage.PASSWORD_UPDATED,
+      responseCode: HttpStatus.ACCEPTED,
       data: {
         user: updatedUser,
       },

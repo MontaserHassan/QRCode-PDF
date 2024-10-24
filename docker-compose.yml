@@ -12,7 +12,7 @@ services:
     depends_on:
       - mongo
     networks:
-      - nest-network
+      - ds-network
 
   mongo:
     container_name: ds-database-app
