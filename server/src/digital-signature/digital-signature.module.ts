@@ -7,15 +7,16 @@ import { ConfigModule } from '@nestjs/config';
 import DigitalSignatureController from './digital-signature.controller';
 import DigitalSignatureService from './digital-signature.service';
 import TokenService from '../user/token.service';
+import fileWithSigningService from './file-with-signature.service';
+import UserService from 'src/user/user.service';
+import { DigitalSignature, digitalSignatureSchema } from './entities/digital-signature.entity';
+import { FileWithSinging, fileWithSingingSchema } from './entities/file-with-signature.entity';
 import { User, userSchema } from '../user/entities/user.entity';
 import { Token, TokenSchema } from '../user/entities/token.entity';
-import { DigitalSignature, digitalSignatureSchema } from './entities/digital-signature.entity';
 import { AuthGuard } from '../Guards/auth/auth.guard';
 import Util from '../Utils/util.util';
 import TokenUtil from '../Utils/token.util';
 import QRCodePDFUtil from 'src/Utils/qrcode-pdf.util';
-import UserService from 'src/user/user.service';
-import { FileWithSinging, fileWithSingingSchema } from './entities/file-with-signature.entity';
 
 
 
@@ -29,6 +30,6 @@ import { FileWithSinging, fileWithSingingSchema } from './entities/file-with-sig
     JwtModule.register({ secret: process.env.JWT_SECRET }),
   ],
   controllers: [DigitalSignatureController],
-  providers: [DigitalSignatureService, UserService, TokenService, TokenUtil, Util, QRCodePDFUtil, AuthGuard],
+  providers: [DigitalSignatureService, fileWithSigningService, UserService, TokenService, TokenUtil, Util, QRCodePDFUtil, AuthGuard],
 })
 export class DigitalSignatureModule { };

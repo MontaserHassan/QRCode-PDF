@@ -5,22 +5,34 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
 import { FileWithSinging, FileWithSingingDocument } from './entities/file-with-signature.entity';
+import CreateFileWithSigningDto from './dto/create-file-with-signature.dto';
+import UpdatedFileDto from './dto/update-file-with-signature.dto';
 
 
 
 @Injectable()
-export default class DigitalSignatureService {
+export default class fileWithSigningService {
 
-  constructor(@InjectModel(FileWithSinging.name) private digitalSignatureModel: Model<FileWithSingingDocument>) { };
+  constructor(@InjectModel(FileWithSinging.name) private fileWithSigningModel: Model<FileWithSingingDocument>) { };
 
-  async create() { };
+  async create(createFileWithSigningDto: CreateFileWithSigningDto) {
+    const createdFileWithSigning = await this.fileWithSigningModel.create(createFileWithSigningDto);
+    return createdFileWithSigning;
+  };
 
-  async findAll() { };
+  async findAll() {
+    const filesWithSignature = await this.fileWithSigningModel.find().select('-__v');
+    return filesWithSignature;
+  };
 
-  async findOne() { };
+  async findById(fileId: string) {
+    const fileWithSignature = await this.fileWithSigningModel.findById(fileId).select('-__v');
+    return fileWithSignature;
+  };
 
-  async findById() { };
-
-  async update() { };
+  async update(updatedFileDto: UpdatedFileDto) {
+    const updatedFileWithSignature = await this.fileWithSigningModel.findByIdAndUpdate(updatedFileDto.fileId, updatedFileDto, { new: true }).select('-__v');
+    return updatedFileWithSignature;
+  };
 
 };

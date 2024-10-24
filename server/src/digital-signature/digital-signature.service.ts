@@ -22,18 +22,18 @@ export default class DigitalSignatureService {
   };
 
   async findAll() {
-    const users = await this.digitalSignatureModel.find().select('-__v');
-    return users;
+    const digitalSignatures = await this.digitalSignatureModel.find().select('-__v');
+    return digitalSignatures;
   };
 
   async findOne(filterData: FilterDigitalSignatureDataDto) {
-    const user = await this.digitalSignatureModel.findOne(filterData).select('-__v');
-    return user;
+    const digitalSignature = await this.digitalSignatureModel.findOne(filterData).select('-__v');
+    return digitalSignature;
   };
 
   async findById(dsId: string) {
-    const user = await this.digitalSignatureModel.findById(dsId).select('-__v');
-    return user;
+    const digitalSignature = await this.digitalSignatureModel.findById(dsId).select('-__v');
+    return digitalSignature;
   };
 
   async update(updateDigitalSignatureDto: UpdateDigitalSignatureDto) {
