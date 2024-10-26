@@ -17,21 +17,22 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.use(timeOut('30s'));
 
-  app.use(bodyParser.json({ limit: '100mb' }));
+  app.use(bodyParser.json({ limit: '20mb' }));
   app.useGlobalPipes(new ValidationPipe({ stopAtFirstError: true, whitelist: true, forbidNonWhitelisted: true, transform: true, }),);
   app.useGlobalFilters(new ValidationExceptionFilter());
 
   app.enableCors({ origin: '*', credentials: true });
 
   const configService = app.get(ConfigService);
-  const port = configService.get<number>('PORT') || 3030;
+  const port = configService.get<number>('PORT');
   const dbUri = configService.get<string>('DB_URI');
 
   app.use(new LoggerMiddleware().use);
 
   const server = await app.listen(port);
   const address = server.address();
-  if (process.env.LOCAL) {
+
+  if (Number(process.env.LOCAL)) {
     Logger.log(`Application is running on: http://localhost:${address.port}/api`, 'Bootstrap',);
     Logger.log(`Connected to the database: ${dbUri}`, 'Bootstrap');
   };
