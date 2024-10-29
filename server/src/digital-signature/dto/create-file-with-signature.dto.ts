@@ -7,4 +7,8 @@ export default class CreateFileWithSigningDto {
     @IsString({ message: "Pdf Content must be a string" })
     @IsNotEmpty({ message: "Pdf Content is required" })
     pdfContent: string;
+
+    @IsString({ message: "User Id must be a string" })
+    @IsNotEmpty({ message: "User Id is required" })
+    userId: string;
 };

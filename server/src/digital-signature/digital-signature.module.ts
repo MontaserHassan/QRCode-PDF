@@ -16,7 +16,9 @@ import { Token, TokenSchema } from '../user/entities/token.entity';
 import { AuthGuard } from '../Guards/auth/auth.guard';
 import Util from '../Utils/util.util';
 import TokenUtil from '../Utils/token.util';
-import QRCodePDFUtil from 'src/Utils/qrcode-pdf.util';
+import QRCodePDFUtil from '../Utils/pdf.util';
+import EncryptionUtil from '../Utils/crypto.util';
+import CanvasUtil from '../Utils/canvas.util';
 
 
 
@@ -30,6 +32,6 @@ import QRCodePDFUtil from 'src/Utils/qrcode-pdf.util';
     JwtModule.register({ secret: process.env.JWT_SECRET }),
   ],
   controllers: [DigitalSignatureController],
-  providers: [DigitalSignatureService, fileWithSigningService, UserService, TokenService, TokenUtil, Util, QRCodePDFUtil, AuthGuard],
+  providers: [DigitalSignatureService, fileWithSigningService, UserService, TokenService, TokenUtil, Util, CanvasUtil, EncryptionUtil, QRCodePDFUtil, AuthGuard],
 })
 export class DigitalSignatureModule { };

@@ -16,6 +16,10 @@ export default class CreateDigitalSignatureDto {
     @IsOptional()
     qrCode?: string;
 
+    @IsString({ message: 'Signature must be a number', })
+    @IsOptional()
+    userSignature?: string;
+
     @IsString({ message: 'Signature Number must be a string', })
     @IsOptional()
     signatureNumber?: string;
@@ -36,8 +40,4 @@ export default class CreateDigitalSignatureDto {
     @IsString({ message: 'Active must be a string', })
     @IsOptional()
     active: boolean;
-
-    @IsString({ message: 'Role must be a string', })
-    @IsOptional()
-    role?: string
 };

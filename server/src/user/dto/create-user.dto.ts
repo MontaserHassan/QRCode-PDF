@@ -10,6 +10,10 @@ export default class CreateUserDto {
     @Transform(({ value }) => value.toLowerCase())
     email: string;
 
+    @IsString({ message: 'User signature must be a string', })
+    @IsNotEmpty({ message: 'User signature is required' })
+    userSignature: string;
+
     @IsString()
     @IsNotEmpty({ message: 'Password is required' })
     @MinLength(8, { message: 'Password must be at least 8 characters long' })

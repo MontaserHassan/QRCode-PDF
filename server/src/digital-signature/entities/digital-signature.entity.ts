@@ -19,16 +19,13 @@ class DigitalSignature {
     signatureNumber: string;
 
     @Prop({ type: String, required: true, unique: true })
-    qrCode: string;
+    userSignature: string;
 
     @Prop({ type: String, required: true, unique: true })
     userId: string;
 
     @Prop({ type: String, required: true, unique: true })
     userCode: string;
-
-    @Prop({ type: String, required: true })
-    role: string;
 
     @Prop({ type: Boolean, required: true, default: true })
     active: boolean;

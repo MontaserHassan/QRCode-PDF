@@ -3,13 +3,16 @@
 import { Body, Controller, Post, Request, Response, NotFoundException, UseGuards, Get, Patch } from '@nestjs/common';
 import * as QRCode from 'qrcode';
 
+
 import DigitalSignatureService from './digital-signature.service';
 import fileWithSigningService from './file-with-signature.service';
 import UserService from '../user/user.service';
 import { ResponseInterface } from '../Interfaces/response.interface';
 import { AuthGuard } from '../Guards/auth/auth.guard';
 import Util from '../Utils/util.util';
-import QRCodePDFUtil from 'src/Utils/qrcode-pdf.util';
+import PDFUtil from '../Utils/pdf.util';
+import EncryptionUtil from '../Utils/crypto.util';
+import CanvasUtil from '../Utils/canvas.util';
 import CreateDigitalSignatureDto from './dto/create-digital-signature.dto';
 import UpdateDigitalSignatureDto from './dto/update-digital-signature.dto';
 import SignPdfDto from './dto/sign.Pdf.dto';
@@ -23,10 +26,14 @@ export default class DigitalSignatureController {
 
   constructor(
     private readonly userService: UserService,
-    private readonly qRCodePDFUtil: QRCodePDFUtil, private readonly util: Util,
+    private readonly util: Util,
+    private readonly pdfUtil: PDFUtil,
+    private readonly encryptionUtil: EncryptionUtil,
+    private readonly canvasUtil: CanvasUtil,
     private readonly digitalSignatureService: DigitalSignatureService,
     private readonly fileWithSigningService: fileWithSigningService,
-  ) { };
+  ) {
+  };
 
   @Post('/')
   @UseGuards(AuthGuard)
@@ -38,18 +45,11 @@ export default class DigitalSignatureController {
       if (isUserHavingDS) throw new NotFoundException(`Digital Signature with ID ${req.user.userId} already exist`);
       createDigitalSignatureDto.userCode = isUserExisting.userCode;
       createDigitalSignatureDto.userId = isUserExisting._id
-      createDigitalSignatureDto.role = isUserExisting.role;
       createDigitalSignatureDto.active = createDigitalSignatureDto.isPaid ? true : false;
       createDigitalSignatureDto.signatureNumber = this.util.generateAlphanumericCode(20);
       createDigitalSignatureDto.subscriptionExpiryDate = this.util.calculateSubscriptionExpiryDate(createDigitalSignatureDto.subscriptionWay);
-      const qrCodeData = {
-        userCode: createDigitalSignatureDto.userCode,
-        role: isUserExisting.role,
-        email: isUserExisting.email,
-        signatureNumber: createDigitalSignatureDto.signatureNumber,
-      };
-      const qrCode = await QRCode.toDataURL(JSON.stringify(qrCodeData));
-      createDigitalSignatureDto.qrCode = qrCode;
+      const signature = this.canvasUtil.createSignature(isUserExisting.userSignature);
+      createDigitalSignatureDto.userSignature = signature;
       const newDigitalSignature = await this.digitalSignatureService.create(createDigitalSignatureDto);
       if (!newDigitalSignature) throw new NotFoundException(`Digital Signature with ID ${createDigitalSignatureDto.userId} does not exist`);
       const response: ResponseInterface = {
@@ -75,8 +75,8 @@ export default class DigitalSignatureController {
       if (!isUserExisting) throw new NotFoundException(`User with ID ${req.user.userId} does not exist`);
       const digitalSignature = await this.digitalSignatureService.findOne({ userId: req.user.userId });
       if (!digitalSignature) throw new NotFoundException(`Digital Signature with ID ${req.user.userId} does not exist`);
-      const pdfWithSigning = await this.qRCodePDFUtil.drawQRCodeOnFile(digitalSignature.qrCode, signPdfDto.pdf);
-      const saveFileWithSignature = await this.fileWithSigningService.create({ pdfContent: pdfWithSigning, });
+      const pdfWithSigning = await this.pdfUtil.drawSignatureOnPDF(digitalSignature.userSignature, isUserExisting.role, signPdfDto.pdf);
+      const saveFileWithSignature = await this.fileWithSigningService.create({ pdfContent: pdfWithSigning, userId: isUserExisting._id });
       if (!saveFileWithSignature) throw new NotFoundException(`File with signature with ID ${req.user.userId} does not exist`);
       const response: ResponseInterface = {
         responseCode: 200,

@@ -19,6 +19,9 @@ class User {
     @Prop({ type: String, required: true, unique: true, })
     email: string;
 
+    @Prop({ type: String, required: true })
+    userSignature: string;
+
     @Prop({ type: String, unique: true })
     userCode: string;
 
