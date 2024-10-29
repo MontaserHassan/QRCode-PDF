@@ -27,6 +27,16 @@ services:
     networks:
       - ds-network
 
+  reactapp:
+    container_name: ds-react-app
+    build:
+      context: ./client
+    restart: always
+    ports:
+      - "3000:3000"
+    networks:
+      - ds-network
+
   nginx:
     container_name: ds-nginx-app
     image: nginx:latest
