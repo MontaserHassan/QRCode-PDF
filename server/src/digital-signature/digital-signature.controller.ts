@@ -17,6 +17,7 @@ import CreateDigitalSignatureDto from './dto/create-digital-signature.dto';
 import UpdateDigitalSignatureDto from './dto/update-digital-signature.dto';
 import SignPdfDto from './dto/sign.Pdf.dto';
 import { ErrorDigitalSignatureMessage, SuccessDigitalSignatureMessage } from '../Messages/index.message';
+import CustomExceptionFilter from 'src/Error/error-exception.error';
 
 
 
@@ -42,16 +43,16 @@ export default class DigitalSignatureController {
       const isUserExisting = await this.userService.findById(req.user.userId);
       if (!isUserExisting) throw new NotFoundException(`User with ID ${req.user.userId} does not exist`);
       const isUserHavingDS = await this.digitalSignatureService.findOne({ userId: req.user.userId });
-      if (isUserHavingDS) throw new NotFoundException(`Digital Signature with ID ${req.user.userId} already exist`);
+      if (isUserHavingDS) throw new CustomExceptionFilter(`Digital Signature with ID ${req.user.userId} already exists`, 400, ['signature']);
       createDigitalSignatureDto.userCode = isUserExisting.userCode;
-      createDigitalSignatureDto.userId = isUserExisting._id
+      createDigitalSignatureDto.userId = isUserExisting._id;
       createDigitalSignatureDto.active = createDigitalSignatureDto.isPaid ? true : false;
       createDigitalSignatureDto.signatureNumber = this.util.generateAlphanumericCode(20);
       createDigitalSignatureDto.subscriptionExpiryDate = this.util.calculateSubscriptionExpiryDate(createDigitalSignatureDto.subscriptionWay);
       const signature = this.canvasUtil.createSignature(isUserExisting.userSignature);
       createDigitalSignatureDto.userSignature = signature;
       const newDigitalSignature = await this.digitalSignatureService.create(createDigitalSignatureDto);
-      if (!newDigitalSignature) throw new NotFoundException(`Digital Signature with ID ${createDigitalSignatureDto.userId} does not exist`);
+      if (!newDigitalSignature) throw new CustomExceptionFilter(`Digital Signature with ID ${createDigitalSignatureDto.userId} does not exist`, 400, ['signature']);
       const response: ResponseInterface = {
         responseCode: 200,
         responseMessage: SuccessDigitalSignatureMessage.CREATED,
@@ -62,7 +63,6 @@ export default class DigitalSignatureController {
       res.locals = response;
       return res.status(response.responseCode).send(response);
     } catch (err) {
-      console.log(err);
       throw err;
     };
   };
@@ -72,12 +72,12 @@ export default class DigitalSignatureController {
   async signPdf(@Request() req, @Response() res, @Body() signPdfDto: SignPdfDto) {
     try {
       const isUserExisting = await this.userService.findById(req.user.userId);
-      if (!isUserExisting) throw new NotFoundException(`User with ID ${req.user.userId} does not exist`);
+      if (!isUserExisting) throw new CustomExceptionFilter(`User with ID ${req.user.userId} does not exist`, 400, ['signature']);
       const digitalSignature = await this.digitalSignatureService.findOne({ userId: req.user.userId });
-      if (!digitalSignature) throw new NotFoundException(`Digital Signature with ID ${req.user.userId} does not exist`);
-      const pdfWithSigning = await this.pdfUtil.drawSignatureOnPDF(digitalSignature.userSignature, isUserExisting.role, signPdfDto.pdf);
+      if (!digitalSignature) throw new CustomExceptionFilter(`Digital Signature with ID ${req.user.userId} does not exist`, 400, ['signature']);
+      const pdfWithSigning = await this.pdfUtil.drawSignatureOnPDF(digitalSignature.userSignature, isUserExisting.role, signPdfDto);
       const saveFileWithSignature = await this.fileWithSigningService.create({ pdfContent: pdfWithSigning, userId: isUserExisting._id });
-      if (!saveFileWithSignature) throw new NotFoundException(`File with signature with ID ${req.user.userId} does not exist`);
+      if (!saveFileWithSignature) throw new CustomExceptionFilter(`File with signature with ID ${req.user.userId} does not exist`, 400, ['file']);
       const response: ResponseInterface = {
         responseCode: 200,
         responseMessage: SuccessDigitalSignatureMessage.PDF_SIGNING,
@@ -85,7 +85,7 @@ export default class DigitalSignatureController {
           pdfWithSigning: pdfWithSigning,
         },
       };
-      // res.locals = response;
+      res.locals = response;
       return res.status(response.responseCode).send(response);
     } catch (err) {
       throw err;

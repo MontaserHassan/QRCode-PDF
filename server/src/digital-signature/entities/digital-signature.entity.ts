@@ -18,7 +18,7 @@ class DigitalSignature {
     @Prop({ type: String, required: true, unique: true })
     signatureNumber: string;
 
-    @Prop({ type: String, required: true, unique: true })
+    @Prop({ type: String, required: true })
     userSignature: string;
 
     @Prop({ type: String, required: true, unique: true })

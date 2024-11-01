@@ -9,28 +9,26 @@ export default class PDFUtil {
 
     constructor() { };
 
-    async drawSignatureOnPDF(signature: string, role: string, pdfContent: string): Promise<string> {
+    async drawSignatureOnPDF(signature: string, role: string, signData: { pdf: string, xPosition: number, yPosition: number }): Promise<string> {
         try {
-            const pdfDoc = await PDFDocument.load(pdfContent);
+            const pdfDoc = await PDFDocument.load(signData.pdf);
             const pages = pdfDoc.getPages();
             const page = pages[pages.length - 1];
 
             const signatureImage = await pdfDoc.embedPng(signature);
             const signatureImageWidth = 80;
             const signatureImageHeight = 80;
-            const signatureX = 100;
-            const signatureY = 100;
 
             page.drawImage(signatureImage, {
-                x: signatureX,
-                y: signatureY,
+                x: signData.xPosition,
+                y: signData.yPosition,
                 width: signatureImageWidth,
                 height: signatureImageHeight,
             });
 
             const fontSize = 7;
-            const textX = signatureX;
-            const textY = signatureY - fontSize - 10;
+            const textX = signData.xPosition;
+            const textY = signData.yPosition - fontSize - 10;
             const date = new Date();
             const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
 

@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { IsString, IsOptional, IsNotEmpty, IsIn, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty, IsIn, IsBoolean, } from 'class-validator';
 
 
 

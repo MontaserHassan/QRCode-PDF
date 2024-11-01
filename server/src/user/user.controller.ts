@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { Controller, Get, Post, Body, Patch, NotFoundException, UseGuards, Request, Response, HttpStatus, } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import * as argon2 from 'argon2';
 
 import UserService from './user.service';
 import CreateUserDto from './dto/create-user.dto';
@@ -9,7 +9,7 @@ import SignInUserDto from './dto/sign-in-user.dto';
 import UpdateUserPasswordDto from './dto/update-password-user.dto';
 import TokenUtil from '../Utils/token.util';
 import { AuthGuard } from '../Guards/auth/auth.guard';
-import { customExceptionFilter } from 'src/Error/error-exception.error';
+import CustomExceptionFilter from 'src/Error/error-exception.error';
 import { ErrorUserMessage, SuccessUserMessage } from 'src/Messages/index.message';
 
 
@@ -24,7 +24,7 @@ export default class UserController {
     try {
       const { email } = createUserDto;
       const isUserExisting = await this.userService.findOne({ email });
-      if (isUserExisting && isUserExisting.email === email) throw new customExceptionFilter(ErrorUserMessage.EMAIL_ALREADY_EXISTS, HttpStatus.OK, ['email']);
+      if (isUserExisting && isUserExisting.email === email) throw new CustomExceptionFilter(ErrorUserMessage.EMAIL_ALREADY_EXISTS, HttpStatus.OK, ['email']);
       const createdUser = await this.userService.create(createUserDto);
       const response = {
         responseMessage: SuccessUserMessage.CREATED,
@@ -45,9 +45,9 @@ export default class UserController {
     try {
       const { email, password } = signInUserDto;
       const user = await this.userService.findOne({ email });
-      if (!user) throw new customExceptionFilter(ErrorUserMessage.INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED, ['email', 'password']);
-      const isPasswordMatch = await bcrypt.compare(password, user.password);
-      if (!isPasswordMatch) throw new customExceptionFilter(ErrorUserMessage.INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED, ['email', 'password']);
+      if (!user) throw new CustomExceptionFilter(ErrorUserMessage.INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED, ['email', 'password']);
+      const isPasswordMatch = await argon2.verify(user.password, password);
+      if (!isPasswordMatch) throw new CustomExceptionFilter(ErrorUserMessage.INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED, ['email', 'password']);
       const createdToken = await this.tokenUtil.createToken(user.email, user._id, user.role);
       const updatedUser = await this.userService.update(user._id, { logged: true, lastSeen: new Date() });
       const response = {
@@ -61,6 +61,7 @@ export default class UserController {
       res.locals = response;
       return res.status(response.responseCode).send(response);
     } catch (err) {
+      console.log(err);
       throw err;
     };
   };
@@ -70,7 +71,7 @@ export default class UserController {
   async getProfile(@Request() req, @Response() res) {
     try {
       const isUserExisting = await this.userService.findById(req.user.userId);
-      if (!isUserExisting) throw new customExceptionFilter(ErrorUserMessage.USER_NOT_FOUND, HttpStatus.UNAUTHORIZED, ['']);
+      if (!isUserExisting) throw new CustomExceptionFilter(ErrorUserMessage.USER_NOT_FOUND, HttpStatus.UNAUTHORIZED, ['']);
       await this.userService.update(isUserExisting._id, { lastSeen: new Date() });
       const response = {
         responseMessage: SuccessUserMessage.GET_PROFILE,
@@ -107,9 +108,9 @@ export default class UserController {
   @Patch('/')
   @UseGuards(AuthGuard)
   async update(@Request() req, @Response() res, @Body() updateUserDto: UpdateUserDto) {
-    if (updateUserDto['password']) throw new customExceptionFilter(ErrorUserMessage.WRONG_DATA, HttpStatus.BAD_REQUEST, ['']);;
+    if (updateUserDto['password']) throw new CustomExceptionFilter(ErrorUserMessage.WRONG_DATA, HttpStatus.BAD_REQUEST, ['']);;
     const isUserExisting = await this.userService.findById(req.user.userId);
-    if (!isUserExisting) throw new customExceptionFilter(ErrorUserMessage.USER_NOT_FOUND, HttpStatus.BAD_REQUEST, ['']);
+    if (!isUserExisting) throw new CustomExceptionFilter(ErrorUserMessage.USER_NOT_FOUND, HttpStatus.BAD_REQUEST, ['']);
     const updatedUser = await this.userService.update(req.user.userId, updateUserDto);
     const response = {
       responseMessage: SuccessUserMessage.UPDATED,

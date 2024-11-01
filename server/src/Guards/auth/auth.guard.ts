@@ -7,6 +7,7 @@ import * as jwt from 'jsonwebtoken';
 
 import TokenUtil from 'src/Utils/token.util';
 import AuthUser from '../../Interfaces/user.interface';
+import CustomExceptionFilter from 'src/Error/error-exception.error';
 
 
 
@@ -24,15 +25,15 @@ export class AuthGuard implements CanActivate {
   async validateRequest(request: Request, response: Response) {
     try {
       const headerToken = request.headers['authorization'];
-      if (!headerToken) throw new UnauthorizedException("Invalid header");
+      if (!headerToken) throw new CustomExceptionFilter(`Invalid header`, 401, ['headers', 'Authorization']);
 
       const token = this.tokenUtil.extractToken(headerToken);
-      if (!token) throw new UnauthorizedException("Invalid token");
+      if (!token) throw new CustomExceptionFilter(`Invalid token`, 401, ['token', 'Authorization']);
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET) as any;
-      if (!decoded) throw new UnauthorizedException("Invalid Token Signature");
+      if (!decoded) throw new CustomExceptionFilter(`Invalid token signature`, 401, ['token', 'Authorization']);
 
-      if (decoded && decoded.expiryDate < new Date) throw new UnauthorizedException("Token expired");
+      if (decoded && decoded.expiryDate < new Date) throw new CustomExceptionFilter(`Token Expired`, 401, ['token', 'Authorization']);
 
       request.user = { userId: decoded.userId, email: decoded.email, role: decoded.role, tokenId: decoded.tokenId, expiryDate: decoded.expiryDate, } as AuthUser;
 

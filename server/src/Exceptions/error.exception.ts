@@ -2,7 +2,7 @@
 import { ExceptionFilter, Catch, ArgumentsHost, BadRequestException, HttpStatus, } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { MongoServerError } from 'mongodb';
-import { customExceptionFilter } from '../Error/error-exception.error';
+import CustomExceptionFilter from '../Error/error-exception.error';
 import { CommonMessage } from 'src/Messages/index.message';
 import logger from 'src/Configs/logger.config';
 
@@ -23,7 +23,7 @@ export default class ValidationExceptionFilter implements ExceptionFilter {
         let fields: string[] | null = null;
         let details: string[] | null = null;
 
-        if (exception instanceof customExceptionFilter) {
+        if (exception instanceof CustomExceptionFilter) {
             status = exception.getStatus();
             const exceptionResponse: any = exception.getResponse();
             message = exceptionResponse.message;

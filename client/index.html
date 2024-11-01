@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sign PDF</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.7.570/pdf.min.js" defer></script>
+        <script src="index.js" defer></script>
+        <style>
+            body {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                font-family: Arial, sans-serif;
+            }
+
+            #pdf-canvas {
+                border: 1px solid #000;
+                margin-top: 20px;
+            }
+
+            #send-data {
+                margin-top: 15px;
+                padding: 10px 20px;
+                font-size: 16px;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+
+    <body>
+        <h1>Place Your Signature</h1>
+        <input type="file" id="pdf-upload" accept="application/pdf" />
+        <canvas id="pdf-canvas" width="600" height="800"></canvas>
+        <button id="send-data">Send to Backend</button>
+    </body>
+
+</html>

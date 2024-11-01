@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import * as bcrypt from 'bcrypt';
+import * as argon2 from 'argon2';
 import { nanoid } from 'nanoid';
 
 import Util from '../../Utils/util.util';
@@ -54,11 +54,8 @@ userSchema.pre<UserDocument>('save', async function (next) {
         this.updatedAt = now;
         if (!this.createdAt) this.createdAt = now;
         if (!this.userCode) this.userCode = util.generateUserCode();
-        if (this.isModified('password')) {
-            const salt = await bcrypt.genSalt(10);
-            this.password = await bcrypt.hash(this.password, salt);
-        };
-        return next();
+        if (!this.isModified('password')) return next();
+        this.password = await argon2.hash(this.password, { type: argon2.argon2id, });
     } catch (err) {
         return next(err);
     }
@@ -74,11 +71,6 @@ userSchema.pre<UserDocument>('updateOne', function (next) {
     this.set({ updatedAt: new Date() });
     next();
 });
-
-
-userSchema.methods.verifyPassword = function verifyPassword(password: string) {
-    return bcrypt.compareSync(password, this.password);
-};
 
 
 userSchema.set('toJSON', {

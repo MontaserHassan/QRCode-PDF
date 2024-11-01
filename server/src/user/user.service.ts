@@ -22,27 +22,27 @@ export default class UserService {
   }
 
   async findAll(): Promise<User[]> {
-    const users = await this.userModel.find().select('-__v -createdAt -updatedAt').sort({ name: 1 });
+    const users = await this.userModel.find().select('-__v').sort({ name: 1 });
     return users;
   };
 
   async findById(id: string): Promise<User> {
-    const user = await this.userModel.findById(id).select('-__v -createdAt -updatedAt');
+    const user = await this.userModel.findById(id).select('-__v');
     return user;
   };
 
   async findOne(filterData: FilterUserDataDto): Promise<User> {
-    const user = await this.userModel.findOne(filterData as Partial<User>).select('-__v -createdAt -updatedAt');
+    const user = await this.userModel.findOne(filterData as Partial<User>).select('-__v');
     return user;
   };
 
   async update(id: string, updateUserDto: UpdateUserDto) {
-    const updateUser = await this.userModel.findByIdAndUpdate(id, updateUserDto, { new: true }).select('-__v -createdAt -updatedAt')
+    const updateUser = await this.userModel.findByIdAndUpdate(id, updateUserDto, { new: true }).select('-__v')
     return updateUser;
   };
 
   async updateByEmail(email: string) {
-    const updatedUser = await this.userModel.findOneAndUpdate({ email: email }, { logged: false }, { new: true }).select('-__v -createdAt -updatedAt')
+    const updatedUser = await this.userModel.findOneAndUpdate({ email: email }, { logged: false }, { new: true }).select('-__v')
     return updatedUser;
   };
 
@@ -53,7 +53,7 @@ export default class UserService {
   };
 
   async remove(email: string) {
-    const deletedUser = await this.userModel.findOneAndDelete({ email }).select('-__v -createdAt -updatedAt');
+    const deletedUser = await this.userModel.findOneAndDelete({ email }).select('-__v');
     return deletedUser;
   };
 
