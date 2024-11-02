@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prettier/prettier */
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { Request, Response } from 'express';
 import * as jwt from 'jsonwebtoken';
 
-import TokenUtil from 'src/Utils/token.util';
+import TokenUtil from '../../Utils/token.util';
 import AuthUser from '../../Interfaces/user.interface';
-import CustomExceptionFilter from 'src/Error/error-exception.error';
+import CustomExceptionFilter from '../../Error/error-exception.error';
 
 
 
@@ -32,14 +32,13 @@ export class AuthGuard implements CanActivate {
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET) as any;
       if (!decoded) throw new CustomExceptionFilter(`Invalid token signature`, 401, ['token', 'Authorization']);
-
       if (decoded && decoded.expiryDate < new Date) throw new CustomExceptionFilter(`Token Expired`, 401, ['token', 'Authorization']);
 
       request.user = { userId: decoded.userId, email: decoded.email, role: decoded.role, tokenId: decoded.tokenId, expiryDate: decoded.expiryDate, } as AuthUser;
-
       return true;
-    } catch (error) {
-      throw new UnauthorizedException(error.message);
+    } catch (err) {
+      if (err instanceof jwt.TokenExpiredError) throw new CustomExceptionFilter(`Token Expired`, 401, ['token', 'Authorization']);
+      throw err;
     };
   };
 

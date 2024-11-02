@@ -7,7 +7,7 @@ import * as timeOut from 'connect-timeout';
 
 import { AppModule } from './app.module';
 import ValidationExceptionFilter from './Exceptions/error.exception';
-import LoggerMiddleware from './logger/logger.middleware';
+// import LoggerMiddleware from './logger/logger.middleware';
 
 
 
@@ -27,7 +27,7 @@ async function bootstrap() {
   const port = configService.get<number>('PORT');
   const dbUri = configService.get<string>('DB_URI');
 
-  app.use(new LoggerMiddleware().use);
+  // app.use(new LoggerMiddleware().use);
 
   const server = await app.listen(port);
   const address = server.address();

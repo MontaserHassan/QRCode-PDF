@@ -48,7 +48,6 @@ export default class ValidationExceptionFilter implements ExceptionFilter {
         const Response = {
             responseCode: status,
             responseMessage: message,
-            actionName: request.url === "/action" ? request.body['actionName'] : "",
             fields: fields,
             details: details,
             path: request.url,
