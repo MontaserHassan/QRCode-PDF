@@ -5,6 +5,7 @@ enum SuccessDigitalSignatureMessage {
     DELETED = 'Digital Signature deleted successfully',
     GET_SIGNATURE = 'Digital Signature fetched successfully',
     PDF_SIGNING = 'PDF signed successfully',
+    INITIATE_PAYMENT = 'Payment initiated successfully',
 };
 
 

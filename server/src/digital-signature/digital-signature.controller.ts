@@ -41,7 +41,7 @@ export default class DigitalSignatureController {
   async createDigitalSignature(@Request() req, @Response() res, @Body() createDigitalSignatureDto: CreateDigitalSignatureDto) {
     try {
       const isUserExisting = await this.userService.findById(req.user.userId);
-      if (!isUserExisting) throw new NotFoundException(`User with ID ${req.user.userId} does not exist`);
+      if (!isUserExisting) throw new CustomExceptionFilter(`User with ID ${req.user.userId} does not exist`, 401, ['token']);
       const isUserHavingDS = await this.digitalSignatureService.findOne({ userId: req.user.userId });
       if (isUserHavingDS) throw new CustomExceptionFilter(`Digital Signature with ID ${req.user.userId} already exists`, 400, ['signature']);
       createDigitalSignatureDto.userCode = isUserExisting.userCode;
@@ -58,6 +58,26 @@ export default class DigitalSignatureController {
         responseMessage: SuccessDigitalSignatureMessage.CREATED,
         data: {
           digitalSignature: newDigitalSignature
+        },
+      };
+      res.locals = response;
+      return res.status(response.responseCode).send(response);
+    } catch (err) {
+      throw err;
+    };
+  };
+
+
+  @Post('/initiate-invoice')
+  @UseGuards(AuthGuard)
+  async initiatePayment(@Request() req, @Response() res,) {
+    try {
+      const isUserExisting = await this.userService.findById(req.user.userId);
+      if (!isUserExisting) throw new CustomExceptionFilter(`User with ID ${req.user.userId} does not exist`, 401, ['token']);
+      const response: ResponseInterface = {
+        responseCode: 200,
+        responseMessage: SuccessDigitalSignatureMessage.INITIATE_PAYMENT,
+        data: {
         },
       };
       res.locals = response;
